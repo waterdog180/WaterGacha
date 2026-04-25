@@ -1,0 +1,19 @@
+# 修改后的pool.yaml（无模拟次数）
+game_type: "genshin"
+strategy: "up_guarantee"
+card_types:
+  - id: "SSR"
+    base_prob: 0.006
+    pity_threshold: 74
+    hard_pity: 90
+    pity_increment: 0.06
+  - id: "SR"
+    base_prob: 0.051
+    pity_threshold: 9
+    hard_pity: 10
+    pity_increment: 0.51
+  - id: "R"
+    base_prob: 0.943
+up_config:
+  target_rarity: "SSR"
+  up_prob: 0.5

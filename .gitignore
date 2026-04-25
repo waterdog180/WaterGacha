@@ -1,0 +1,17 @@
+# 依赖包
+node_modules/
+vendor/
+
+# IDE配置
+.idea/
+.vscode/
+*.iml
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境变量
+.env
+experiments/
+logs/

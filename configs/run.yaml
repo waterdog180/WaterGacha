@@ -1,0 +1,28 @@
+# 极简实验配置，临时新增项无需改代码
+global:
+  experiment_name: "genshin_up_test_100w"
+  random_seed: 42
+simulation:
+  rounds: 5000        # 5000轮 × 200抽 = 100万次抽卡
+  draws_per_round: 200
+data_generation:
+  output_dir: "./experiments"
+  chunk_size: 100000
+data_analysis:
+  target_rarity: "SSR"
+  enabled: [
+    "basic_stats", 
+    "distribution", 
+    "conditional_prob", 
+    "two_dimensional",
+    "consecutive_lose",          # 阶段1.5新增：连续歪的概率分布
+    "conditional_expectation",    # 阶段1.5新增：条件期望
+    "confidence_interval",        # 阶段1.5新增：置信区间
+    "guarantee_trigger_distribution"  # 阶段1.5新增：大保底触发次数分布
+  ]
+  visualization:
+    enabled: true
+    save_dir: "./experiments/plots"
+    dpi: 300
+    figsize: [12, 8]
+    style: "seaborn-v0_8"
