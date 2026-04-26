@@ -1,6 +1,6 @@
 # 极简实验配置，临时新增项无需改代码
 global:
-  experiment_name: "genshin_up_test_100w"
+  experiment_name: "genshin_weapon_test_100w"
   random_seed: 42
 simulation:
   rounds: 5000        # 5000轮 × 200抽 = 100万次抽卡
@@ -18,7 +18,8 @@ data_analysis:
     "consecutive_lose",
     "conditional_expectation",
     "confidence_interval",
-    "guarantee_trigger_distribution"
+    "guarantee_trigger_distribution",
+    "weapon_fate_point"  # 新增：武器池专属分析
   ]
   visualization:
     enabled: true

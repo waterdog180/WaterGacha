@@ -1,14 +1,17 @@
 """
-唯一入口（实验文件夹隔离版）
-显式导入插件，确保它们被注册
+唯一入口（Bug修复版）
+添加安全检查，避免KeyError
 """
 from pathlib import Path
 import logging
 from card_pool_analysis import load_config, Simulator, DataIO, Analysis
-import plugins  # 显式导入插件包，确保所有插件被注册
+import plugins
 
 # ========== 快速切换配置（仅改这两行） ==========
-POOL_CONFIG = Path("configs/pool.yaml")
+# 角色池配置
+# POOL_CONFIG = Path("configs/pool.yaml")
+# 武器池配置
+POOL_CONFIG = Path("configs/pool_genshin_weapon.yaml")
 RUN_CONFIG = Path("configs/run.yaml")
 # ==================================================
 
@@ -27,7 +30,7 @@ def main():
     logger = logging.getLogger(__name__)
     
     print("=" * 60)
-    print("抽卡模拟分析项目（阶段2：插件化架构+实验文件夹隔离）")
+    print("抽卡模拟分析项目（Bug修复版）")
     print("=" * 60)
 
     try:
@@ -48,7 +51,6 @@ def main():
         # 4. 运行分析+保存结果
         logger.info("\n[4/4] 运行分析...")
         df = data_io.read_data(data_path)
-        # 🔥 修改：传递实验独立文件夹和图片目录给Analysis类
         analysis = Analysis(config, data_io.exp_dir, data_io.plots_dir)
         analysis_results = analysis.run(df)
         analysis_path = analysis.save(analysis_results)
@@ -63,6 +65,13 @@ def main():
         if "conditional_prob" in analysis_results["analyses"]:
             cond = analysis_results["analyses"]["conditional_prob"]
             print(f"小保底歪率: {cond['small_pity_lose_rate']:.2%}")
+        if "weapon_fate_point" in analysis_results["analyses"]:
+            wfp = analysis_results["analyses"]["weapon_fate_point"]
+            # 🔥 修复：添加安全检查
+            if wfp and "fate_point_triggered_rate" in wfp:
+                print(f"定轨触发率: {wfp['fate_point_triggered_rate']:.2%}")
+            if wfp and "mean_fate_point" in wfp:
+                print(f"平均定轨值: {wfp['mean_fate_point']:.2f}")
         print("=" * 60)
         print(f"实验独立文件夹: {data_io.exp_dir}")
         print(f"实验日志: {log_path}")

@@ -1,0 +1,21 @@
+# 原神武器池配置模板
+game_type: "genshin"
+strategy: "fate_point_genshin_weapon"  # 更新为新机制名称
+card_types:
+  - id: "SSR"
+    base_prob: 0.007
+    pity_threshold: 63
+    hard_pity: 80
+    pity_increment: 0.07
+  - id: "SR"
+    base_prob: 0.060
+    pity_threshold: 8
+    hard_pity: 10
+    pity_increment: 0.60
+  - id: "R"
+    base_prob: 0.933
+weapon_config:
+  target_rarity: "SSR"
+  up_weapons: ["Weapon1", "Weapon2"]  # 双UP武器
+  selected_up: "Weapon1"  # 定轨的UP武器
+  up_prob: 0.75  # 武器池UP率75%

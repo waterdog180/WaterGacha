@@ -1,6 +1,6 @@
-# 修改后的pool.yaml（无模拟次数）
+# 原神角色池配置模板
 game_type: "genshin"
-strategy: "up_guarantee"
+strategy: "up_guarantee_genshin_character"  # 更新为新机制名称
 card_types:
   - id: "SSR"
     base_prob: 0.006

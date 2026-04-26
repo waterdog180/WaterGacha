@@ -1,6 +1,6 @@
 """
-简单随机策略插件
-无保底、无UP，纯随机抽卡
+简单随机机制插件
+无保底、无UP，纯随机抽卡（通用机制）
 """
 from typing import Dict, Any, Tuple
 import numpy as np
@@ -9,12 +9,12 @@ from card_pool_analysis.registry import register_mechanism
 
 
 @register_mechanism(
-    name="simple",
+    name="simple_random",
     game="generic",
     pool_type="simple",
-    description="无保底、无UP，纯随机抽卡"
+    description="无保底、无UP，纯随机抽卡（通用机制）"
 )
-def simple_mechanism(
+def simple_random_mechanism(
     config: Dict[str, Any],
     round_rng: np.random.Generator,
     state: PoolState,
@@ -23,7 +23,7 @@ def simple_mechanism(
     seed_chain: Tuple[int, int, int]
 ) -> DrawResult:
     """
-    简单随机策略实现
+    简单随机机制实现
     
     Args:
         config: 合并后的配置字典

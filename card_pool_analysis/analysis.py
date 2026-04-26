@@ -1,6 +1,6 @@
 """
-分析模块（实验文件夹隔离版）
-使用实验独立的图片目录，避免覆盖
+分析模块（Bug修复版）
+修复武器池定轨值分析的DataFrame字段读取问题
 """
 from pathlib import Path
 from typing import Dict, Any, Tuple
@@ -17,13 +17,6 @@ logger = logging.getLogger(__name__)
 # ========== 极简分析器（所有逻辑集中） ==========
 class Analysis:
     def __init__(self, config: Dict[str, Any], exp_dir: Path, plots_dir: Path):
-        """
-        🔥 修改：新增exp_dir和plots_dir参数，从DataIO获取
-        Args:
-            config: 合并后的配置字典
-            exp_dir: 实验独立文件夹路径
-            plots_dir: 实验独立的图片目录路径
-        """
         self.config = config
         self.exp_dir = exp_dir
         self.plots_dir = plots_dir
@@ -276,6 +269,72 @@ class Analysis:
             "distribution": counts.to_dict()
         }
 
+    # ========== 阶段3 新增：武器池专属分析（Bug修复版） ==========
+    def _weapon_fate_point(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """
+        武器池专属分析：定轨值系统分析（Bug修复版）
+        - 定轨触发率：所有UP武器中定轨触发的占比
+        - 平均定轨值：抽到UP武器时的平均定轨值
+        - 定轨值分布：抽到UP武器时定轨值的分布
+        - 定轨消耗分布：消耗0/1/2点定轨值抽到UP的概率
+        """
+        logger.info("正在执行分析: weapon_fate_point")
+        
+        # 兼容性检查：仅武器池策略执行
+        if self.pool_type != "weapon":
+            logger.warning("非武器池策略，跳过定轨值分析")
+            return {}
+        
+        target_df = df[df["rarity"] == self.target]
+        if len(target_df) == 0:
+            return {}
+        
+        # 筛选UP武器的记录
+        up_df = target_df[target_df["is_up"] == True]
+        if len(up_df) == 0:
+            return {}
+        
+        # 🔥 修复：直接从DataFrame列读取，而不是从"extended"列读取
+        fate_points = []
+        fate_point_triggered = []
+        
+        for _, row in up_df.iterrows():
+            # 直接访问展平后的列
+            fp = row.get("fate_point", 0)
+            fpt = row.get("fate_point_triggered", False)
+            
+            # 处理可能的NaN值
+            if pd.isna(fp):
+                fp = 0
+            if pd.isna(fpt):
+                fpt = False
+                
+            fate_points.append(fp)
+            fate_point_triggered.append(fpt)
+        
+        if not fate_points:
+            return {}
+        
+        # 1. 定轨触发率
+        fate_point_triggered_count = sum(fate_point_triggered)
+        fate_point_triggered_rate = fate_point_triggered_count / len(up_df)
+        
+        # 2. 平均定轨值
+        mean_fate_point = float(np.mean(fate_points))
+        
+        # 3. 定轨值分布
+        fate_point_dist = pd.Series(fate_points).value_counts(normalize=True).sort_index()
+        
+        # 4. 定轨消耗分布
+        fate_point_consume_dist = fate_point_dist.to_dict()
+        
+        return {
+            "fate_point_triggered_rate": float(fate_point_triggered_rate),
+            "mean_fate_point": float(mean_fate_point),
+            "fate_point_distribution": fate_point_dist.to_dict(),
+            "fate_point_consume_distribution": fate_point_consume_dist
+        }
+
     # ========== 可视化方法（全英文） ==========
     def _visualize_1d(self, df: pd.DataFrame, analysis_results: Dict[str, Any]):
         """一维可视化：PMF、CDF、收敛曲线（全英文）"""
@@ -434,6 +493,45 @@ class Analysis:
         plt.close()
         logger.info("置信区间图已保存")
 
+    # ========== 阶段3 新增：武器池专属可视化 ==========
+    def _visualize_weapon_fate_point(self, wfp_results: Dict[str, Any]):
+        """武器池专属可视化：定轨值系统分析（全英文）"""
+        if not wfp_results:
+            return
+        
+        # 1. 定轨值分布直方图
+        if "fate_point_distribution" in wfp_results:
+            dist = wfp_results["fate_point_distribution"]
+            fig, ax = plt.subplots(figsize=self.vis_figsize)
+            ax.bar(dist.keys(), dist.values(), alpha=0.7, color="#9467bd")
+            ax.set_xlabel("Fate Point When Pulling UP Weapon", fontsize=12)
+            ax.set_ylabel("Probability", fontsize=12)
+            ax.set_title("Distribution of Fate Points When Pulling UP Weapon", fontsize=14)
+            ax.set_xlim(-0.5, 2.5)
+            ax.set_xticks([0, 1, 2])
+            ax.grid(alpha=0.3, axis="y")
+            plt.tight_layout()
+            plt.savefig(self.plots_dir / "weapon_fate_point_distribution.png", dpi=self.vis_dpi)
+            plt.close()
+            logger.info("定轨值分布直方图已保存")
+        
+        # 2. 定轨消耗分布饼图
+        if "fate_point_consume_distribution" in wfp_results:
+            dist = wfp_results["fate_point_consume_distribution"]
+            labels = [f"Fate Point {k}" for k in dist.keys()]
+            sizes = list(dist.values())
+            colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+            
+            fig, ax = plt.subplots(figsize=self.vis_figsize)
+            wedges, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, 
+                                               autopct='%1.1f%%', startangle=90)
+            ax.axis('equal')
+            ax.set_title("Distribution of Fate Points When Pulling UP Weapon", fontsize=14)
+            plt.tight_layout()
+            plt.savefig(self.plots_dir / "weapon_fate_point_pie.png", dpi=self.vis_dpi)
+            plt.close()
+            logger.info("定轨消耗分布饼图已保存")
+
     def run(self, df: pd.DataFrame) -> Dict[str, Any]:
         """运行所有启用的分析"""
         logger.info("开始分析...")
@@ -450,6 +548,7 @@ class Analysis:
         two_d_results = None
         cl_results = None
         ci_results = None
+        wfp_results = None
         
         for name in self.enabled:
             method = getattr(self, f"_{name}", None)
@@ -462,6 +561,8 @@ class Analysis:
                     cl_results = results["analyses"][name]
                 if name == "confidence_interval":
                     ci_results = results["analyses"][name]
+                if name == "weapon_fate_point":
+                    wfp_results = results["analyses"][name]
             else:
                 logger.warning(f"未知分析方法: {name}，已跳过")
         
@@ -476,13 +577,14 @@ class Analysis:
                 self._visualize_consecutive_lose(cl_results)
             if "confidence_interval" in self.enabled and ci_results:
                 self._visualize_confidence_interval(ci_results)
+            if "weapon_fate_point" in self.enabled and wfp_results:
+                self._visualize_weapon_fate_point(wfp_results)
         
         logger.info("分析完成")
         return results
 
     def save(self, results: Dict[str, Any]) -> Path:
-        """🔥 修改：分析结果保存在实验独立文件夹中"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        """分析结果保存在实验独立文件夹中"""
         file_path = self.exp_dir / "analysis.json"
         
         try:

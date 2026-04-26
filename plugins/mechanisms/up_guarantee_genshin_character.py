@@ -1,5 +1,5 @@
 """
-原神角色池UP大保底策略插件
+UP大保底机制插件（原神角色池）
 原神标准角色池机制：
 - 基础概率：SSR 0.6%，SR 5.1%，R 94.3%
 - 软保底：74抽后概率递增，90抽必出SSR
@@ -12,12 +12,12 @@ from card_pool_analysis.registry import register_mechanism
 
 
 @register_mechanism(
-    name="up_guarantee",
+    name="up_guarantee_genshin_character",
     game="genshin",
     pool_type="character",
     description="原神标准角色池UP大保底机制"
 )
-def genshin_character_mechanism(
+def up_guarantee_genshin_character_mechanism(
     config: Dict[str, Any],
     round_rng: np.random.Generator,
     state: PoolState,
@@ -26,7 +26,7 @@ def genshin_character_mechanism(
     seed_chain: Tuple[int, int, int]
 ) -> DrawResult:
     """
-    原神角色池UP大保底策略实现
+    原神角色池UP大保底机制实现
     
     Args:
         config: 合并后的配置字典
