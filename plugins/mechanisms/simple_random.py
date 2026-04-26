@@ -6,12 +6,14 @@ from typing import Dict, Any, Tuple
 import numpy as np
 from card_pool_analysis.schemas import PoolState, DrawResult
 from card_pool_analysis.registry import register_mechanism
+from card_pool_analysis.infra import Game, PoolType, MechanismTag
 
 
 @register_mechanism(
     name="simple_random",
-    game="generic",
-    pool_type="simple",
+    game=Game.GENERIC,
+    pool_type=PoolType.SIMPLE,
+    tags={MechanismTag.SIMPLE_RANDOM},
     description="无保底、无UP，纯随机抽卡（通用机制）"
 )
 def simple_random_mechanism(
@@ -22,27 +24,12 @@ def simple_random_mechanism(
     pull_id: int,
     seed_chain: Tuple[int, int, int]
 ) -> DrawResult:
-    """
-    简单随机机制实现
-    
-    Args:
-        config: 合并后的配置字典
-        round_rng: 轮随机数生成器
-        state: 当前卡池状态
-        sim_id: 模拟ID
-        pull_id: 抽卡ID
-        seed_chain: 种子链（全局, 轮, 抽）
-    
-    Returns:
-        抽卡结果
-    """
     card_types = {c["id"]: c for c in config["card_types"]}
     ids = list(card_types.keys())
     probs = [card_types[c]["base_prob"] for c in ids]
     norm_probs = [p / sum(probs) for p in probs]
     rarity = round_rng.choice(ids, p=norm_probs)
     
-    # 更新保底计数（虽然简单策略不用，但保持统一接口）
     for card_id in card_types:
         state.pity_count[card_id] += 1
     current_pity_count = state.pity_count[rarity]
