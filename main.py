@@ -1,6 +1,6 @@
 """
-唯一入口（Bug修复版）
-添加安全检查，避免KeyError
+唯一入口（阶段4：工作流解耦版）
+完整流程的统一入口
 """
 from pathlib import Path
 import logging
@@ -30,7 +30,7 @@ def main():
     logger = logging.getLogger(__name__)
     
     print("=" * 60)
-    print("抽卡模拟分析项目（Bug修复版）")
+    print("抽卡模拟分析项目（阶段4：工作流解耦）")
     print("=" * 60)
 
     try:
@@ -67,7 +67,6 @@ def main():
             print(f"小保底歪率: {cond['small_pity_lose_rate']:.2%}")
         if "weapon_fate_point" in analysis_results["analyses"]:
             wfp = analysis_results["analyses"]["weapon_fate_point"]
-            # 🔥 修复：添加安全检查
             if wfp and "fate_point_triggered_rate" in wfp:
                 print(f"定轨触发率: {wfp['fate_point_triggered_rate']:.2%}")
             if wfp and "mean_fate_point" in wfp:
@@ -79,6 +78,10 @@ def main():
         print(f"分析结果: {analysis_path}")
         print(f"可视化图片: {data_io.plots_dir}")
         print("=" * 60)
+        print("\n提示：也可以使用独立脚本分步运行：")
+        print(f"  1. python scripts/run_simulation.py --pool-config {POOL_CONFIG} --run-config {RUN_CONFIG}")
+        print(f"  2. python scripts/run_analysis.py --exp-dir {data_io.exp_dir}")
+        print(f"  3. python scripts/run_visualization.py --exp-dir {data_io.exp_dir}")
 
     except Exception as e:
         logger.error(f"程序运行失败: {str(e)}", exc_info=True)
