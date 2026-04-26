@@ -1,6 +1,6 @@
 """
-分析模块（Bug修复版）
-移除策略元数据中的func字段，避免JSON序列化错误
+分析模块（实验文件夹隔离版）
+使用实验独立的图片目录，避免覆盖
 """
 from pathlib import Path
 from typing import Dict, Any, Tuple
@@ -16,15 +16,23 @@ logger = logging.getLogger(__name__)
 
 # ========== 极简分析器（所有逻辑集中） ==========
 class Analysis:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], exp_dir: Path, plots_dir: Path):
+        """
+        🔥 修改：新增exp_dir和plots_dir参数，从DataIO获取
+        Args:
+            config: 合并后的配置字典
+            exp_dir: 实验独立文件夹路径
+            plots_dir: 实验独立的图片目录路径
+        """
         self.config = config
+        self.exp_dir = exp_dir
+        self.plots_dir = plots_dir
         self.target = config["data_analysis"].get("target_rarity", "SSR")
         self.enabled = config["data_analysis"].get("enabled", [
             "basic_stats", "distribution", "conditional_prob", "two_dimensional"
         ])
         self.vis_config = config["data_analysis"].get("visualization", {})
         self.vis_enabled = self.vis_config.get("enabled", False)
-        self.vis_dir = Path(self.vis_config.get("save_dir", "./experiments/plots"))
         self.vis_dpi = self.vis_config.get("dpi", 300)
         self.vis_figsize = tuple(self.vis_config.get("figsize", [12, 8]))
         self.vis_style = self.vis_config.get("style", "seaborn-v0_8")
@@ -40,13 +48,12 @@ class Analysis:
             self.pool_type = "unknown"
         
         if self.vis_enabled:
-            self.vis_dir.mkdir(parents=True, exist_ok=True)
             plt.style.use(self.vis_style)
         
         logger.info(f"分析器初始化完成：目标稀有度={self.target}，启用分析={self.enabled}")
         logger.info(f"策略元数据：游戏={self.strategy_meta.get('game', 'unknown')}，卡池类型={self.pool_type}")
         if self.vis_enabled:
-            logger.info(f"可视化已启用：保存目录={self.vis_dir}")
+            logger.info(f"可视化已启用：保存目录={self.plots_dir}")
 
     def _basic_stats(self, df: pd.DataFrame) -> Dict[str, Any]:
         target_df = df[df["rarity"] == self.target]
@@ -287,7 +294,7 @@ class Analysis:
         ax.set_title("Distribution of Pulls to First SSR (PMF)", fontsize=14)
         ax.grid(alpha=0.3)
         plt.tight_layout()
-        plt.savefig(self.vis_dir / "pmf.png", dpi=self.vis_dpi)
+        plt.savefig(self.plots_dir / "pmf.png", dpi=self.vis_dpi)
         plt.close()
         logger.info("PMF图已保存")
         
@@ -300,7 +307,7 @@ class Analysis:
         ax.set_title("Cumulative Distribution of Pulls to First SSR (CDF)", fontsize=14)
         ax.grid(alpha=0.3)
         plt.tight_layout()
-        plt.savefig(self.vis_dir / "cdf.png", dpi=self.vis_dpi)
+        plt.savefig(self.plots_dir / "cdf.png", dpi=self.vis_dpi)
         plt.close()
         logger.info("CDF图已保存")
         
@@ -320,7 +327,7 @@ class Analysis:
             ax.legend(fontsize=12)
             ax.grid(alpha=0.3)
             plt.tight_layout()
-            plt.savefig(self.vis_dir / "convergence.png", dpi=self.vis_dpi)
+            plt.savefig(self.plots_dir / "convergence.png", dpi=self.vis_dpi)
             plt.close()
             logger.info("收敛曲线图已保存")
 
@@ -346,7 +353,7 @@ class Analysis:
         ax.set_title("Joint Distribution Heatmap: Pulls vs Pity Count", fontsize=14)
         plt.colorbar(im, ax=ax, label="Probability Density")
         plt.tight_layout()
-        plt.savefig(self.vis_dir / "joint_distribution.png", dpi=self.vis_dpi)
+        plt.savefig(self.plots_dir / "joint_distribution.png", dpi=self.vis_dpi)
         plt.close()
         logger.info("联合分布热力图已保存")
         
@@ -365,7 +372,7 @@ class Analysis:
         ax2.grid(alpha=0.3)
         
         plt.tight_layout()
-        plt.savefig(self.vis_dir / "marginal_distributions.png", dpi=self.vis_dpi)
+        plt.savefig(self.plots_dir / "marginal_distributions.png", dpi=self.vis_dpi)
         plt.close()
         logger.info("边缘分布直方图已保存")
         
@@ -381,7 +388,7 @@ class Analysis:
         ax.legend(fontsize=12)
         ax.grid(alpha=0.3)
         plt.tight_layout()
-        plt.savefig(self.vis_dir / "conditional_distribution.png", dpi=self.vis_dpi)
+        plt.savefig(self.plots_dir / "conditional_distribution.png", dpi=self.vis_dpi)
         plt.close()
         logger.info("条件分布折线图已保存")
 
@@ -402,7 +409,7 @@ class Analysis:
         ax.set_xlim(0, min(max_lose + 1, 10))
         ax.grid(alpha=0.3)
         plt.tight_layout()
-        plt.savefig(self.vis_dir / "consecutive_lose.png", dpi=self.vis_dpi)
+        plt.savefig(self.plots_dir / "consecutive_lose.png", dpi=self.vis_dpi)
         plt.close()
         logger.info("连续歪概率分布图已保存")
 
@@ -423,7 +430,7 @@ class Analysis:
         ax.set_title("Confidence Intervals of Expected Pulls", fontsize=14)
         ax.grid(alpha=0.3, axis="y")
         plt.tight_layout()
-        plt.savefig(self.vis_dir / "confidence_interval.png", dpi=self.vis_dpi)
+        plt.savefig(self.plots_dir / "confidence_interval.png", dpi=self.vis_dpi)
         plt.close()
         logger.info("置信区间图已保存")
 
@@ -434,7 +441,6 @@ class Analysis:
             "timestamp": datetime.now().isoformat(),
             "experiment_name": self.config["global"]["experiment_name"],
             "target_rarity": self.target,
-            # 🔥 修复：只保存策略元数据中的非func字段
             "strategy_metadata": {
                 k: v for k, v in self.strategy_meta.items() if k != "func"
             },
@@ -474,12 +480,10 @@ class Analysis:
         logger.info("分析完成")
         return results
 
-    def save(self, results: Dict[str, Any], output_dir: Path) -> Path:
-        """保存分析结果为JSON"""
-        output_dir.mkdir(parents=True, exist_ok=True)
+    def save(self, results: Dict[str, Any]) -> Path:
+        """🔥 修改：分析结果保存在实验独立文件夹中"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        exp_name = self.config["global"]["experiment_name"]
-        file_path = output_dir / f"{timestamp}_{exp_name}_analysis.json"
+        file_path = self.exp_dir / "analysis.json"
         
         try:
             with open(file_path, 'w', encoding='utf-8') as f:

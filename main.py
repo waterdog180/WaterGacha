@@ -1,5 +1,5 @@
 """
-唯一入口（规范版）
+唯一入口（实验文件夹隔离版）
 显式导入插件，确保它们被注册
 """
 from pathlib import Path
@@ -27,7 +27,7 @@ def main():
     logger = logging.getLogger(__name__)
     
     print("=" * 60)
-    print("抽卡模拟分析项目（阶段2：插件化架构）")
+    print("抽卡模拟分析项目（阶段2：插件化架构+实验文件夹隔离）")
     print("=" * 60)
 
     try:
@@ -48,9 +48,10 @@ def main():
         # 4. 运行分析+保存结果
         logger.info("\n[4/4] 运行分析...")
         df = data_io.read_data(data_path)
-        analysis = Analysis(config)
+        # 🔥 修改：传递实验独立文件夹和图片目录给Analysis类
+        analysis = Analysis(config, data_io.exp_dir, data_io.plots_dir)
         analysis_results = analysis.run(df)
-        analysis_path = analysis.save(analysis_results, data_io.output_dir)
+        analysis_path = analysis.save(analysis_results)
 
         # 打印关键结果
         print("\n" + "=" * 60)
@@ -63,9 +64,11 @@ def main():
             cond = analysis_results["analyses"]["conditional_prob"]
             print(f"小保底歪率: {cond['small_pity_lose_rate']:.2%}")
         print("=" * 60)
+        print(f"实验独立文件夹: {data_io.exp_dir}")
         print(f"实验日志: {log_path}")
         print(f"数据文件: {data_path}")
         print(f"分析结果: {analysis_path}")
+        print(f"可视化图片: {data_io.plots_dir}")
         print("=" * 60)
 
     except Exception as e:

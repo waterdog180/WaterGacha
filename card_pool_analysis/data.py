@@ -1,6 +1,6 @@
 """
-数据模块（微调版）
-仅调整导入，其他功能保持不变
+数据模块（实验文件夹隔离版）
+每次运行实验自动创建独立文件夹，避免文件覆盖
 """
 from pathlib import Path
 from typing import Generator, List, Dict, Any
@@ -10,7 +10,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from datetime import datetime
-from .schemas import DrawResult  # 仅调整导入
+from .schemas import DrawResult
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +38,22 @@ class DataGenerator:
 class DataIO:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.output_dir = Path(config["data_generation"]["output_dir"])
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.base_output_dir = Path(config["data_generation"]["output_dir"])
+        self.base_output_dir.mkdir(parents=True, exist_ok=True)
         self.chunk_size = config["data_generation"].get("chunk_size", 100000)
+        
+        # 🔥 新增：创建独立实验文件夹
+        self.exp_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.exp_name = config["global"]["experiment_name"]
+        self.exp_dir = self.base_output_dir / f"{self.exp_timestamp}_{self.exp_name}"
+        self.exp_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 🔥 新增：创建可视化图片子目录
+        self.plots_dir = self.exp_dir / "plots"
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        
         logger.info(f"数据持久化初始化：分块大小={self.chunk_size}")
+        logger.info(f"实验独立文件夹已创建: {self.exp_dir}")
 
     def _get_git_hash(self) -> str | None:
         try:
@@ -55,17 +67,17 @@ class DataIO:
             return None
 
     def _generate_paths(self) -> tuple[Path, Path, Path]:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        exp_name = self.config["global"]["experiment_name"]
+        """🔥 修改：所有文件都保存在独立实验文件夹中"""
         return (
-            self.output_dir / f"{timestamp}_{exp_name}.parquet",
-            self.output_dir / f"{timestamp}_{exp_name}_meta.json",
-            self.output_dir / f"{timestamp}_{exp_name}.log"
+            self.exp_dir / "data.parquet",
+            self.exp_dir / "meta.json",
+            self.exp_dir / "log.txt"
         )
 
     def write(self, result_generator: Generator[DrawResult, None, None]) -> tuple[Path, Path, Path]:
         data_path, meta_path, log_path = self._generate_paths()
         
+        # 配置日志输出到实验文件夹的log.txt
         file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
         logging.getLogger().addHandler(file_handler)
@@ -74,7 +86,7 @@ class DataIO:
         try:
             meta = {
                 "timestamp": datetime.now().isoformat(),
-                "experiment_name": self.config["global"]["experiment_name"],
+                "experiment_name": self.exp_name,
                 "git_hash": self._get_git_hash(),
                 "config": self.config
             }

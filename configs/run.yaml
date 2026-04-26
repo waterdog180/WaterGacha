@@ -15,14 +15,13 @@ data_analysis:
     "distribution", 
     "conditional_prob", 
     "two_dimensional",
-    "consecutive_lose",          # 阶段1.5新增：连续歪的概率分布
-    "conditional_expectation",    # 阶段1.5新增：条件期望
-    "confidence_interval",        # 阶段1.5新增：置信区间
-    "guarantee_trigger_distribution"  # 阶段1.5新增：大保底触发次数分布
+    "consecutive_lose",
+    "conditional_expectation",
+    "confidence_interval",
+    "guarantee_trigger_distribution"
   ]
   visualization:
     enabled: true
-    save_dir: "./experiments/plots"
     dpi: 300
     figsize: [12, 8]
     style: "seaborn-v0_8"
