@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import logging
+import json
 from card_pool_analysis import DataIO, Analysis
 
 
@@ -54,17 +55,16 @@ def main():
         
         # 确保plots目录存在
         plots_dir.mkdir(parents=True, exist_ok=True)
-
+        
         # 读取数据
         logger.info("读取数据...")
         df = DataIO.read_data(data_path)
-
+        
         # 读取分析结果
         logger.info("读取分析结果...")
-        import json
         with open(analysis_path, 'r', encoding='utf-8') as f:
             analysis_results = json.load(f)
-
+        
         # 生成可视化
         logger.info("生成可视化...")
         analysis = Analysis(config, exp_dir, plots_dir)
@@ -92,7 +92,6 @@ def main():
         print("=" * 60)
         print(f"可视化图片: {plots_dir}")
         print("=" * 60)
-
     except Exception as e:
         logger.error(f"可视化失败: {str(e)}", exc_info=True)
         print(f"\n❌ 可视化失败: {str(e)}")

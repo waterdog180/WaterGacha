@@ -1,6 +1,6 @@
 """
-数据模块（实验文件夹隔离版）
-每次运行实验自动创建独立文件夹，避免文件覆盖
+数据模块（原子化架构 · 彻底重构版）
+零兼容、零回退、零技术债
 """
 from pathlib import Path
 from typing import Generator, List, Dict, Any
@@ -14,7 +14,6 @@ from .schemas import DrawResult
 
 logger = logging.getLogger(__name__)
 
-# ========== 极简数据生成器 ==========
 class DataGenerator:
     @staticmethod
     def to_dataframe(results: List[DrawResult]) -> pd.DataFrame:
@@ -34,7 +33,6 @@ class DataGenerator:
             records.append(record)
         return pd.DataFrame(records)
 
-# ========== 极简数据持久化（数据+元数据分离） ==========
 class DataIO:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -42,13 +40,11 @@ class DataIO:
         self.base_output_dir.mkdir(parents=True, exist_ok=True)
         self.chunk_size = config["data_generation"].get("chunk_size", 100000)
         
-        # 🔥 新增：创建独立实验文件夹
         self.exp_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.exp_name = config["global"]["experiment_name"]
+        self.exp_name = config["global_config"]["experiment_name"]
         self.exp_dir = self.base_output_dir / f"{self.exp_timestamp}_{self.exp_name}"
         self.exp_dir.mkdir(parents=True, exist_ok=True)
         
-        # 🔥 新增：创建可视化图片子目录
         self.plots_dir = self.exp_dir / "plots"
         self.plots_dir.mkdir(parents=True, exist_ok=True)
         
@@ -67,7 +63,6 @@ class DataIO:
             return None
 
     def _generate_paths(self) -> tuple[Path, Path, Path]:
-        """🔥 修改：所有文件都保存在独立实验文件夹中"""
         return (
             self.exp_dir / "data.parquet",
             self.exp_dir / "meta.json",
@@ -77,7 +72,6 @@ class DataIO:
     def write(self, result_generator: Generator[DrawResult, None, None]) -> tuple[Path, Path, Path]:
         data_path, meta_path, log_path = self._generate_paths()
         
-        # 配置日志输出到实验文件夹的log.txt
         file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
         logging.getLogger().addHandler(file_handler)

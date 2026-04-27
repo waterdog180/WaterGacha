@@ -1,21 +1,30 @@
-# 原神武器池配置模板
+# 原神武器池配置（原子化架构）
+# 纯卡池机制，无实验参数
 game_type: "genshin"
-strategy: "fate_point_genshin_weapon"  # 更新为新机制名称
+strategy: "atomic_mechanism"
 card_types:
   - id: "SSR"
     base_prob: 0.007
-    pity_threshold: 63
-    hard_pity: 80
-    pity_increment: 0.07
   - id: "SR"
     base_prob: 0.060
-    pity_threshold: 8
-    hard_pity: 10
-    pity_increment: 0.60
   - id: "R"
     base_prob: 0.933
-weapon_config:
+# 原子组件开关
+soft_pity:
+  enabled: true
+  threshold: 63
+  increment: 0.07
+hard_pity:
+  enabled: true
+  threshold: 80
+up_judge:
+  enabled: true
   target_rarity: "SSR"
-  up_weapons: ["Weapon1", "Weapon2"]  # 双UP武器
-  selected_up: "Weapon1"  # 定轨的UP武器
-  up_prob: 0.75  # 武器池UP率75%
+  up_prob: 0.75
+  up_items: ["Weapon1", "Weapon2"]
+  selected_up: "Weapon1"
+pity_guarantee:
+  enabled: false
+fate_point:
+  enabled: true
+  max_point: 2

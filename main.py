@@ -1,28 +1,20 @@
 """
-唯一入口（阶段4：工作流解耦版）
-完整流程的统一入口
+唯一入口（原子化架构 · 彻底重构版）
+零兼容、零回退、零技术债
 """
 from pathlib import Path
 import logging
 from card_pool_analysis import load_config, Simulator, DataIO, Analysis
 import plugins
 
-# ========== 快速切换配置（仅改这两行） ==========
-# 角色池配置
-# POOL_CONFIG = Path("configs/pool.yaml")
-# 武器池配置
 POOL_CONFIG = Path("configs/pool_genshin_weapon.yaml")
 RUN_CONFIG = Path("configs/run.yaml")
-# ==================================================
 
 def setup_logging():
-    """初始化日志系统（中文输出）"""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler()
-        ]
+        handlers=[logging.StreamHandler()]
     )
 
 def main():
@@ -30,32 +22,27 @@ def main():
     logger = logging.getLogger(__name__)
     
     print("=" * 60)
-    print("抽卡模拟分析项目（阶段4：工作流解耦）")
+    print("抽卡模拟分析项目（原子化架构）")
     print("=" * 60)
 
     try:
-        # 1. 加载配置
         logger.info("\n[1/4] 加载配置...")
         config = load_config(POOL_CONFIG, RUN_CONFIG)
 
-        # 2. 运行模拟
         logger.info("\n[2/4] 运行模拟...")
         simulator = Simulator(config)
         result_generator = simulator.run()
 
-        # 3. 保存数据+元数据+日志
         logger.info("\n[3/4] 保存数据...")
         data_io = DataIO(config)
         data_path, meta_path, log_path = data_io.write(result_generator)
 
-        # 4. 运行分析+保存结果
         logger.info("\n[4/4] 运行分析...")
         df = data_io.read_data(data_path)
         analysis = Analysis(config, data_io.exp_dir, data_io.plots_dir)
         analysis_results = analysis.run(df)
         analysis_path = analysis.save(analysis_results)
 
-        # 打印关键结果
         print("\n" + "=" * 60)
         print("关键分析结果")
         print("=" * 60)

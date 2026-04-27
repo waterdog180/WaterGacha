@@ -1,9 +1,9 @@
-# 极简实验配置，临时新增项无需改代码
-global:
+# 极简实验配置（原子化架构 · 彻底重构版）
+global_config:
   experiment_name: "genshin_weapon_test_100w"
   random_seed: 42
 simulation:
-  rounds: 5000        # 5000轮 × 200抽 = 100万次抽卡
+  rounds: 5000
   draws_per_round: 200
 data_generation:
   output_dir: "./experiments"
@@ -19,7 +19,7 @@ data_analysis:
     "conditional_expectation",
     "confidence_interval",
     "guarantee_trigger_distribution",
-    "weapon_fate_point"  # 新增：武器池专属分析
+    "weapon_fate_point"
   ]
   visualization:
     enabled: true

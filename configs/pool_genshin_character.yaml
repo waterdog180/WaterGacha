@@ -1,6 +1,7 @@
 # 原神角色池配置（原子化架构）
 # 纯卡池机制，无实验参数
 game_type: "genshin"
+strategy: "atomic_mechanism"
 card_types:
   - id: "SSR"
     base_prob: 0.006

@@ -1,13 +1,6 @@
 """
-策略插件包
-显式导入所有策略插件，确保它们被注册
+策略插件包（原子化架构 · 彻底重构版）
+只保留原子化机制
 """
-from .simple_random import simple_random_mechanism
-from .up_guarantee_genshin_character import up_guarantee_genshin_character_mechanism
-from .fate_point_genshin_weapon import fate_point_genshin_weapon_mechanism
-
-__all__ = [
-    "simple_random_mechanism",
-    "up_guarantee_genshin_character_mechanism",
-    "fate_point_genshin_weapon_mechanism"
-]
+from .atomic_mechanism import atomic_mechanism
+__all__ = ["atomic_mechanism"]

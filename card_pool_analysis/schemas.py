@@ -1,28 +1,27 @@
 """
-统一数据结构模块
-所有插件和核心模块共享的数据结构
+数据结构定义
 """
-from typing import Dict, Any, Tuple
 from dataclasses import dataclass, field
-
+from typing import Dict, Optional, Any
 
 @dataclass
 class PoolState:
     """
-    卡池状态数据结构
-    所有策略插件共享的状态
+    卡池状态（标准化扩展字段）
     """
+    # 标准保底计数
     pity_count: Dict[str, int] = field(default_factory=dict)
-    guarantee_active: bool = False
-    extended: Dict[str, Any] = field(default_factory=dict)
+    # 标准化扩展字段（由 StateEx 统一管理）
+    extended: Optional[Dict[str, Any]] = field(default_factory=dict)
 
+    def __post_init__(self):
+        """初始化安全保障"""
+        self.pity_count = self.pity_count or {}
+        self.extended = self.extended or {}
 
 @dataclass
 class DrawResult:
-    """
-    抽卡结果数据结构
-    所有策略插件必须返回的统一格式
-    """
+    """抽卡结果结构"""
     sim_id: int
     pull_id: int
     rarity: str
@@ -32,5 +31,5 @@ class DrawResult:
     is_up: bool
     guarantee_triggered: bool
     pity_count: int
-    seed_chain: Tuple[int, int, int]
-    extended: Dict[str, Any] = field(default_factory=dict)
+    seed_chain: tuple[int, int, int]
+    extended: Optional[Dict[str, Any]] = None

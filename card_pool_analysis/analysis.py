@@ -1,6 +1,6 @@
 """
-分析管理模块（彻底重构版）
-仅负责识别触发、数据分发、日志输出
+分析管理模块（原子化架构 · 彻底重构版）
+零兼容、零回退、零技术债
 """
 from pathlib import Path
 from typing import Dict, Any
@@ -31,7 +31,6 @@ from .visualization_tool import (
 )
 
 logger = logging.getLogger(__name__)
-
 
 class Analysis:
     def __init__(self, config: Dict[str, Any], exp_dir: Path, plots_dir: Path):
@@ -72,7 +71,7 @@ class Analysis:
         
         results = {
             "timestamp": datetime.now().isoformat(),
-            "experiment_name": self.config["global"]["experiment_name"],
+            "experiment_name": self.config["global_config"]["experiment_name"],
             "target_rarity": self.target,
             "strategy_metadata": strategy_meta_serializable,
             "analyses": {}

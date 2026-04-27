@@ -12,7 +12,7 @@ from .infra import (
     parse_tags,
     tags_to_strings
 )
-from .core import load_config, Simulator
+from .simulator import load_config, Simulator
 from .data import DataGenerator, DataIO
 from .analysis import Analysis
 
